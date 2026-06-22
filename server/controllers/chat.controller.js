@@ -1,9 +1,7 @@
 const multer = require('multer');
 const path = require('path');
-const { TextMessage, VoiceMessage, User } = require('../models/models');
+const { TextMessage, VoiceMessage, User, BookClub } = require('../models/models');
 const { transcribeAudio } = require('../services/whisper.service');
-
-
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, process.env.UPLOAD_DIR || 'uploads'),
@@ -74,30 +72,18 @@ async function uploadVoice(req, res) {
     if (!club_id) return res.status(400).json({ message: 'club_id обязателен' });
     if (!req.file) return res.status(400).json({ message: 'Файл не загружен' });
 
-    console.log('Файл получен:', req.file.filename);
-
     const voice = await VoiceMessage.create({
       user_id: req.user.user_id,
       club_id: parseInt(club_id),
       audio_path: req.file.filename
     });
 
-    // ЯВНО вызываем и ЖДЁМ результат
     const filePath = req.file.path;
-    console.log('Вызываю Whisper для:', filePath);
-    
     const transcript = await transcribeAudio(filePath);
     
     if (transcript) {
       await VoiceMessage.update(
         { transcript },
-        { where: { voice_id: voice.voice_id } }
-      );
-      console.log(`Расшифровка сохранена: "${transcript}"`);
-    } else {
-      console.log('Расшифровка не получена');
-      await VoiceMessage.update(
-        { transcript: '[Ошибка распознавания]' },
         { where: { voice_id: voice.voice_id } }
       );
     }
@@ -106,4 +92,25 @@ async function uploadVoice(req, res) {
   });
 }
 
-module.exports = { getMessages, uploadVoice };
+async function deleteMessage(req, res) {
+  try {
+    const { message_id } = req.params;
+    
+    const msg = await TextMessage.findByPk(message_id);
+    if (!msg) return res.status(404).json({ message: 'Сообщение не найдено' });
+
+    const club = await BookClub.findByPk(msg.club_id);
+    if (msg.user_id !== req.user.user_id && 
+        club.creator_id !== req.user.user_id && 
+        req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Нет прав' });
+    }
+
+    await msg.destroy();
+    res.json({ message: 'Сообщение удалено' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = { getMessages, uploadVoice, deleteMessage };

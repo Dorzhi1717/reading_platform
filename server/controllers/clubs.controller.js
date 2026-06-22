@@ -142,4 +142,37 @@ async function leave(req, res) {
   }
 }
 
-module.exports = { getAll, getMy, getById, create, join, leave };
+async function removeClub(req, res) {
+  try {
+    const club = await BookClub.findByPk(req.params.id);
+    
+    if (!club) {
+      return res.status(404).json({ message: 'Клуб не найден' });
+    }
+
+    // Админ или создатель может удалить
+    if (club.creator_id !== req.user.user_id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Нет прав на удаление' });
+    }
+
+    await club.destroy();
+    res.json({ message: 'Клуб удалён' });
+  } catch (err) {
+    console.error('removeClub error:', err);
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function removeAll(req, res) {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Только для админа' });
+    }
+    await BookClub.destroy({ where: {}, truncate: true, cascade: true });
+    res.json({ message: 'Все клубы удалены' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = { getAll, getMy, getById, create, join, leave, removeClub, removeAll };
