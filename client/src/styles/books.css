@@ -1,0 +1,73 @@
+.add-book-form {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.add-book-field label {
+  font-size: 13px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.add-book-field input {
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+.add-book-field input:focus {
+  border-color: var(--accent);
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.book-card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 16px;
+  position: relative;
+}
+
+.book-cover {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.book-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.book-author {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.book-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.book-remove:hover {
+  color: var(--error);
+}
