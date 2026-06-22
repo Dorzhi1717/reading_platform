@@ -4,6 +4,7 @@ const sequelize = require('./db')
 const models = require('./models/models.js')
 const cors = require('cors');
 
+const fs = require('fs')
 const http = require('http')
 const path = require('path')
 const { Server } = require('socket.io')
@@ -72,6 +73,10 @@ const PORT = process.env.PORT || 3000
 
 const start = async() =>{
     try {
+        if (!fs.existsSync('uploads')) {
+            fs.mkdirSync('uploads');
+        }
+        
         await sequelize.authenticate()
         await sequelize.sync()
         server.listen(PORT, () => console.log('Server started on port: ' + PORT))   
