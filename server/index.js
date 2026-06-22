@@ -23,7 +23,7 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:5173',
-    'https://reading-platform.onrender.com'
+    'https://reading-platform-4s0x.onrender.com'
   ],
   credentials: true
 }));
@@ -62,7 +62,7 @@ const io = new Server(server, {
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:5173',
-      'https://reading-platform.onrender.com'
+      'https://reading-platform-4s0x.onrender.com'
     ]
   }
 });
