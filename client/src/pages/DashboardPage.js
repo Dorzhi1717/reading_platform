@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { clubsAPI } from '../api';
+import { useAuth } from '../context/AuthContext';
 import ChatRoom from '../components/ChatRoom';
 import '../styles/dashboard.css';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [clubs, setClubs] = useState([]);
   const [myClubs, setMyClubs] = useState([]);
   const [chatOpen, setChatOpen] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Поля для создания клуба
   const [showCreate, setShowCreate] = useState(false);
   const [newClubName, setNewClubName] = useState('');
   const [newClubDesc, setNewClubDesc] = useState('');
@@ -55,6 +56,17 @@ export default function DashboardPage() {
     try {
       await clubsAPI.leave(clubId);
       await fetchClubs();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Ошибка');
+    }
+  };
+
+  const handleDelete = async (e, clubId) => {
+    e.stopPropagation();
+    if (!window.confirm('Удалить клуб? Это действие нельзя отменить.')) return;
+    try {
+      await clubsAPI.remove(clubId);
+      fetchClubs();
     } catch (err) {
       alert(err.response?.data?.message || 'Ошибка');
     }
@@ -107,7 +119,6 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Форма создания клуба */}
       {showCreate && (
         <form onSubmit={handleCreate} style={{
           background: 'var(--surface)',
@@ -184,6 +195,7 @@ export default function DashboardPage() {
       <div className="clubs-list">
         {clubs.map(club => {
           const isMember = myClubs.includes(club.club_id);
+          const isOwner = club.creator_id === user?.user_id || user?.role === 'admin';
 
           return (
             <div
@@ -199,6 +211,24 @@ export default function DashboardPage() {
               </div>
               <div className="club-meta">👥 {club.member_count}</div>
 
+              {isOwner && (
+                <button
+                  onClick={(e) => handleDelete(e, club.club_id)}
+                  style={{
+                    background: 'none',
+                    border: '1px solid rgba(224,85,85,0.3)',
+                    borderRadius: 20,
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    color: '#e05555',
+                    cursor: 'pointer',
+                    marginLeft: 4
+                  }}
+                >
+                  🗑️
+                </button>
+              )}
+
               {isMember ? (
                 <button
                   onClick={(e) => handleLeave(e, club.club_id)}
@@ -210,7 +240,7 @@ export default function DashboardPage() {
                     fontSize: 12,
                     color: 'var(--muted)',
                     cursor: 'pointer',
-                    marginLeft: 8
+                    marginLeft: 4
                   }}
                 >
                   Выйти
@@ -227,7 +257,7 @@ export default function DashboardPage() {
                     fontWeight: 600,
                     color: '#fff',
                     cursor: 'pointer',
-                    marginLeft: 8
+                    marginLeft: 4
                   }}
                 >
                   Вступить
