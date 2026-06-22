@@ -1,7 +1,7 @@
 import axios from 'axios';
-baseURL: 'https://reading-platform-api.onrender.com/api',
+
 const API = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'https://reading-platform-api.onrender.com/api',
   headers: { 'Content-Type': 'application/json' }
 });
 

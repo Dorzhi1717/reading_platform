@@ -4,6 +4,8 @@ import { chatAPI } from '../api';
 import { io } from 'socket.io-client';
 import '../styles/chat.css';
 
+const API_URL = 'https://reading-platform-api.onrender.com';
+
 export default function ChatRoom({ club, onClose }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -18,7 +20,7 @@ export default function ChatRoom({ club, onClose }) {
   useEffect(() => {
     chatAPI.getMessages(club.club_id).then(res => setMessages(res.data)).catch(() => {});
 
-    const sock = io('http://https://reading-platform-api.onrender.com', { auth: { token } });
+    const sock = io(API_URL, { auth: { token } });
     sock.emit('chat:join', { club_id: club.club_id });
     sock.on('chat:message', (msg) => setMessages(prev => [...prev, msg]));
     sock.on('chat:error', (err) => alert(err.message));
@@ -43,21 +45,11 @@ export default function ChatRoom({ club, onClose }) {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      const options = {};
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        options.mimeType = 'audio/webm;codecs=opus';
-      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-        options.mimeType = 'audio/webm';
-      }
-      
-      const mr = new MediaRecorder(stream, options);
+      const mr = new MediaRecorder(stream);
       const chunks = [];
 
       mr.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-        }
+        if (e.data.size > 0) chunks.push(e.data);
       };
 
       mr.onstop = async () => {
@@ -68,14 +60,13 @@ export default function ChatRoom({ club, onClose }) {
           return;
         }
 
-        const blob = new Blob(chunks, { type: options.mimeType || 'audio/webm' });
-        
+        const blob = new Blob(chunks, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('audio', blob, 'voice.webm');
         formData.append('club_id', club.club_id);
 
         try {
-          const res = await fetch('http://https://reading-platform-api.onrender.com/api/chat/voice', {
+          const res = await fetch(`${API_URL}/api/chat/voice`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
             body: formData
@@ -115,29 +106,30 @@ export default function ChatRoom({ club, onClose }) {
         </div>
 
         <div className="messages-area">
-  {messages.map(msg => (
-    <div key={msg.id} className={`message ${msg.user_id === user.user_id ? 'mine' : ''}`}>
-      <div className="message-author">{msg.author_name}</div>
-      {msg.type === 'voice' ? (
-        <div>
-          <audio controls preload="metadata" style={{ maxWidth: 220, height: 36 }}
-            src={`http://https://reading-platform-api.onrender.com/uploads/${msg.audio_url}`} />
-          {msg.text !== '[Голосовое сообщение]' && (
-            <div style={{ fontSize: 13, color: '#333', marginTop: 4, fontStyle: 'italic', background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: 8 }}>
-              {msg.text}
+          {messages.map(msg => (
+            <div key={msg.id} className={`message ${msg.user_id === user.user_id ? 'mine' : ''}`}>
+              <div className="message-author">{msg.author_name}</div>
+              {msg.type === 'voice' ? (
+                <div>
+                  <audio controls preload="metadata" style={{ maxWidth: 220, height: 36 }}
+                    src={`${API_URL}/uploads/${msg.audio_url}`} />
+                  {msg.text !== '[Голосовое сообщение]' && (
+                    <div style={{ fontSize: 13, color: '#b0b0b0', marginTop: 4, fontStyle: 'italic',
+                      background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: 8 }}>
+                      {msg.text}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="message-text">{msg.text}</div>
+              )}
+              <div className="message-time">
+                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
-          )}
+          ))}
+          <div ref={messagesEndRef} />
         </div>
-      ) : (
-        <div className="message-text">{msg.text}</div>
-      )}
-      <div className="message-time">
-        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-      </div>
-    </div>
-  ))}
-  <div ref={messagesEndRef} />
-</div>
 
         <div className="chat-input-area">
           <input
