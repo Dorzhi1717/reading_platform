@@ -16,13 +16,19 @@ const booksRoutes = require('./routes/books.routes')
 const chatRoutes = require('./routes/chat.routes')
 const statsRoutes = require('./routes/stats.routes')
 
-
 const app = express()
 
-app.use(cors())
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'https://reading-platform.onrender.com'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
-// Заголовки для аудио
 app.use('/uploads', (req, res, next) => {
   if (req.url.endsWith('.webm')) {
     res.setHeader('Content-Type', 'audio/webm');
@@ -38,7 +44,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   }
 }));
 
-
 app.use('/api/auth', authRoutes);
 app.use('/api/clubs', clubsRoutes);
 app.use('/api/books', booksRoutes);
@@ -52,7 +57,14 @@ app.use(errorHandler);
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'] }
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'https://reading-platform.onrender.com'
+    ]
+  }
 });
 setupChatSocket(io);
 
@@ -65,7 +77,6 @@ const start = async() =>{
         server.listen(PORT, () => console.log('Server started on port: ' + PORT))   
     } catch (e) {
         console.log(e)
-        
     }
 }
 
